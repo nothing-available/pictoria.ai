@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { LoginForm } from "@/components/authentication/LoginForm";
 import { Button } from "@/components/ui/button";
 import { SignupForm } from "@/components/authentication/SignupForm";
 import Link from "next/link";
 import { ResetPassword } from "./ResetPasswordForm";
+import { LoginForm } from "./LoginForm";
 
 export function AuthForm() {
   const [mode, setmode] = useState("login");
@@ -17,18 +17,19 @@ export function AuthForm() {
           {mode === "reset"
             ? "reset password"
             : mode === "login"
-            ? "Login"
-            : "Sign Up"}
+              ? "Login"
+              : "Sign Up"}
         </h1>
 
         <p className='text-sm text-muted-foreground'>
           {mode === "reset"
             ? "Enter your email to reset your password"
             : mode === "login"
-            ? "Enter your credentials to login"
-            : "Enter your details to sign up"}
+              ? "Enter your credentials to login"
+              : "Enter your details to sign up"}
         </p>
       </div>
+
       {mode === "login" && (
         <>
           <LoginForm />

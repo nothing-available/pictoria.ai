@@ -1,6 +1,5 @@
 "use client";
 
-import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -14,42 +13,22 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { signUpFormSchema } from "@/lib/auth-schema";
+import { useId, useState } from "react";
+import { Loader } from "lucide-react";
+import { z } from "zod";
+import { toast } from "sonner";
+import { signUp } from "@/actions/auth-actions";
+import { redirect } from "next/navigation";
 
-const passwordValidationRegex = new RegExp(
-  "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])(?=.{8,})"
-);
+export function SignupForm({ className }: { className?: string; }) {
 
-const formSchema = z
-  .object({
-    full_name: z.string().min(3, {
-      message: "Full name must be alteast 3 characters",
-    }),
-    email: z.string().email({
-      message: "Please enter valid email address",
-    }),
-    password: z
-      .string({
-        required_error: "Password is required",
-      })
-      .min(8, {
-        message: "Password must be atleast 8 characters",
-      })
-      .regex(passwordValidationRegex, {
-        message:
-          "Password must contain atleast one uppercase, one lowercase, one number and one special character",
-      }),
-    confirm_password: z.string({
-      required_error: " Confirm password is required",
-    }),
-  })
-  .refine(data => data.password === data.confirm_password, {
-    message: "Password  don't match",
-    path: ["confirm_password"],
-  });
+  const [loading, setLoading] = useState(false);
 
-export function SignupForm({ className }: { className?: string }) {
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const toastId = useId();
+
+  const form = useForm<z.infer<typeof signUpFormSchema>>({
+    resolver: zodResolver(signUpFormSchema),
     defaultValues: {
       email: "",
       password: "",
@@ -58,8 +37,27 @@ export function SignupForm({ className }: { className?: string }) {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
+  async function onSubmit(values: z.infer<typeof signUpFormSchema>) {
+
+    toast.loading("Signing up...", { id: toastId });
+    setLoading(true);
+
+    const formData = new FormData();
+    formData.append("email", values.email);
+    formData.append("password", values.password);
+    formData.append("full_name", values.full_name);
+
+    const { error, success } = await signUp(formData);
+
+    if (!success) {
+      toast.error(error || "Sign up failed", { id: toastId });
+      setLoading(false);
+    } else {
+      toast.success("Sign up successful! Please confirm your email", { id: toastId });
+      setLoading(false);
+      redirect('/login'); 
+    }
+
   }
 
   return (
@@ -76,7 +74,7 @@ export function SignupForm({ className }: { className?: string }) {
                 <FormLabel>Full Name</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder='Enter your full Name'
+                    placeholder='Enter your full name'
                     {...field}
                   />
                 </FormControl>
@@ -125,11 +123,11 @@ export function SignupForm({ className }: { className?: string }) {
             name='confirm_password'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Conform Password</FormLabel>
+                <FormLabel>Confirm Password</FormLabel>
                 <FormControl>
                   <Input
                     type='password'
-                    placeholder='Conform your password'
+                    placeholder='Confirm your password'
                     {...field}
                   />
                 </FormControl>
@@ -138,9 +136,9 @@ export function SignupForm({ className }: { className?: string }) {
             )}
           />
 
-          <Button
-            type='submit'
-            className='w-full'>
+          <Button type='submit' className='w-full' disabled={loading}>
+
+            {loading && <Loader className='mr-2 h-4 w-4 animate-spin' />}
             Sign up
           </Button>
         </form>

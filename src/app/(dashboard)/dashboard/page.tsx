@@ -1,11 +1,12 @@
-import requireUser from "@/lib/authHook";
+import LogoutBtn from "@/components/authentication/LogoutBtn";
 
 export default async function Page() {
-    const session = await requireUser()
-    
+
   return (
     <div>
-        Dashboard
+      Dashboard
+      <LogoutBtn />
+
     </div>
   );
 }

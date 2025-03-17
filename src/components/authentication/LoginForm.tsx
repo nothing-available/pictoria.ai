@@ -14,6 +14,11 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useId, useState } from "react";
+import { toast } from "sonner";
+import { signIn } from "@/actions/auth-actions";
+import { redirect } from "next/navigation";
+import { Loader } from "lucide-react";
 
 const formSchema = z.object({
   email: z.string().email({
@@ -24,7 +29,12 @@ const formSchema = z.object({
   }),
 });
 
-export function LoginForm({ className }: { className?: string }) {
+export function LoginForm({ className }: { className?: string; }) {
+
+  const [loading, setLoading] = useState(false);
+
+  const toastId = useId();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -33,8 +43,24 @@ export function LoginForm({ className }: { className?: string }) {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+
+    toast.loading("Logging in...", { id: toastId });
+    setLoading(true);
+
+    const formData = new FormData();
+    formData.append("email", values.email);
+    formData.append("password", values.password);
+
+    const { error, success } = await signIn(formData);
+    if (!success) {
+      toast.error(error || "Sign in failed", { id: toastId });
+      setLoading(false);
+    } else {
+      toast.success("Sign in successful!", { id: toastId });
+      setLoading(false);
+      redirect('/dashboard');
+    }
   }
 
   return (
@@ -68,7 +94,7 @@ export function LoginForm({ className }: { className?: string }) {
                 <FormLabel>Password</FormLabel>
                 <FormControl>
                   <Input
-                  type="password"
+                    type="password"
                     placeholder='Enter your password'
                     {...field}
                   />
@@ -78,7 +104,13 @@ export function LoginForm({ className }: { className?: string }) {
             )}
           />
 
-          <Button type='submit' className="w-full">Login</Button>
+          <Button
+            type='submit'
+            className="w-full"
+          >
+            {loading && <Loader className='mr-2 h-4 w-4 animate-spin' />}
+            Login
+          </Button>
         </form>
       </Form>
     </div>
