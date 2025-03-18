@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { signUpFormSchema } from "@/lib/auth-schema";
+import { signUpFormSchema } from "@/schema/auth-schema";
 import { useId, useState } from "react";
 import { Loader } from "lucide-react";
 import { z } from "zod";
