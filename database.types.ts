@@ -9,7 +9,7 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      generated_images: {
+      generatedimages: {
         Row: {
           aspect_ratio: string | null
           created_at: string
