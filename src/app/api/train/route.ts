@@ -1,5 +1,15 @@
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import Replicate from "replicate";
+
+const replicate = new Replicate({
+  auth: process.env.REPLICATE_API_TOKEN,
+});
+
+const WEB_HOOK_URL =
+  process.env.SITE_URL ??
+  "https://7c6c-2401-4900-1c30-649-11dc-c8a0-4909-4930.ngrok-free.app";
 
 export async function POST(request: NextRequest) {
   try {
@@ -39,9 +49,58 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+    const fileName = input.fileKey.replace("training-data/", "");
+    const { data: fileUrl } = await supabaseAdmin.storage
+      .from("training-data")
+      .createSignedUrl(fileName, 3600);
 
-    // Log input (consider using a proper logger in production)
-    console.log("Processing request for user:", user.id, "Input:", input);
+    if (!fileUrl?.signedUrl) {
+      throw new Error("Failed to get the file url");
+    }
+
+    // const hardware = await replicate.hardware.list()
+    // console.log(hardware);
+
+    // make model
+    const modelId = `${user.id}_${Date.now()}_${input.modelName
+      .toLowerCase()
+      .replaceAll(" ", "_")}`;
+
+    await replicate.models.create("imcaffiene", modelId, {
+      visibility: "private",
+      hardware: "gpu-a100-large",
+    });
+
+    // start training
+    const training = await replicate.trainings.create(
+      "ostris",
+      "flux-dev-lora-trainer",
+      "c6e78d2501e8088876e99ef21e4460d0dc121af7a4b786b9a4c2d75c620e300d",
+      {
+        destination: `imcaffiene/${modelId}`,
+        input: {
+          steps: 1200,
+          resolution: "1024",
+          input_images: fileUrl.signedUrl,
+          trigger_word: "smtkur",
+        },
+        webhook: `${WEB_HOOK_URL}/api/webhooks/training`, // Fix this line
+        webhook_events_filter: ["completed"],
+      }
+    );
+
+    //add model value in the databse
+    await supabaseAdmin.from("models").insert({
+      model_id: modelId,
+      user_id: user.id,
+      model_name: input.modelName,
+      gender: input.gender,
+      training_status: training.status,
+      trigger_word: "smtkur",
+      training_steps: 1200,
+      training_id: training.id,
+    });
+    // console.log("Training started:", training);
 
     return NextResponse.json(
       { success: true, userId: user.id },
@@ -50,7 +109,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "An unexpected error occurred";
-      
+
     console.error("API Route Error:", error);
 
     return NextResponse.json({ error: errorMessage }, { status: 500 });
