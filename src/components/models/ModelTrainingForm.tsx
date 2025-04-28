@@ -67,6 +67,8 @@ function ModelTrainingForm() {
       formData.append('modelName', values.modelName);
       formData.append('gender', values.gender);
 
+      toast.loading("Starting training...", { id: toastId }); 
+
       //use the /train handler
       const response = await fetch('/api/train', {
         method: 'POST',
@@ -109,7 +111,6 @@ function ModelTrainingForm() {
             )}
           />
 
-          {/* Removed the nested form and kept just the RadioGroup */}
           <FormField
             control={form.control}
             name="gender"

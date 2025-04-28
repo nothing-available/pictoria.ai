@@ -21,9 +21,9 @@ export const modelTrainingSchema = z.object({
       "Only letters, numbers, spaces, hyphens and underscores allowed"
     ),
 
-  gender: z.enum(["man", "woman"], {
+  gender: z.enum(["man", "women"], {
     required_error: "Gender selection is required",
-    invalid_type_error: "Gender must be either 'man' or 'woman'",
+    invalid_type_error: "Gender must be either 'man' or 'women'",
   }),
   
   zipfile: z

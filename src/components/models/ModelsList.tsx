@@ -1,4 +1,6 @@
-import React from 'react';
+'use client';
+
+import React, { useId } from 'react';
 import { Database } from '../../../database.types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
@@ -16,6 +18,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { toast } from 'sonner';
+import { deleteModel } from '@/actions/model-action';
 
 
 type ModelTypes = {
@@ -30,7 +34,24 @@ interface ModelListProps {
 
 function ModelsList({ models }: ModelListProps) {
 
-  const { error, success, data } = models;
+  const { data } = models;
+
+  const toastId = useId();
+
+  const handleDeleteModel = async (id: number, model_id: string, model_version: string) => {
+
+    toast.loading('Deleting model...', { id: toastId, });
+
+    const { error, success } = await deleteModel(id, model_id, model_version);
+
+    if (error) {
+      toast.error(error, { id: toastId });
+    }
+
+    if (success) {
+      toast.success("Model deleted successfully", { id: toastId });
+    }
+  };
 
   if (data?.length === 0) {
     return (
@@ -42,7 +63,7 @@ function ModelsList({ models }: ModelListProps) {
           </CardDescription>
           <Link href={'/model-training'} className='inline-block pt-2'>
             <Button className='w-fit'>
-              Create New Model
+              Create Model
             </Button>
           </Link>
         </CardHeader>
@@ -55,57 +76,69 @@ function ModelsList({ models }: ModelListProps) {
       {data?.map((model) =>
         <Card key={model.id} className='relative flex flex-col overflow-hidden'>
           <CardHeader>
-            <CardTitle>{model.model_name}</CardTitle>
 
-            <div>
-              <div className='flex items-center gap-2'>
+            <div className='flex  items-center justify-between'>
+              <CardTitle>{model.model_name}</CardTitle>
 
-                {model.training_status === 'succeeded' ?
-                  (
-                    <div className='flex items-center gap-1 text-sm text-green-500'>
-                      <CheckCircle2 className='w-4 h-4' />
-                      <span className='capitalize'>Ready</span>
-                    </div>
+              <div className='flex items-center justify-center gap-2'>
 
-                  ) : model.training_status === 'failed' || model.training_status === 'canceled' ?
+                <div className='flex items-center gap-2'>
+
+                  {model.training_status === 'succeeded' ?
                     (
-
-                      <div className='flex items-center gap-1 text-sm text-red-500'>
-                        <XCircle className='w-4 h-4' />
-                        <span className='capitalize'>{model.training_status}</span>
+                      <div className='flex items-center gap-1 text-sm text-green-500'>
+                        <CheckCircle2 className='w-4 h-4' /> {" "}
+                        <span className='capitalize'>Ready</span>
                       </div>
 
-                    ) : (
+                    ) : model.training_status === 'failed' || model.training_status === 'canceled' ?
+                      (
 
-                      <div className='flex items-center gap-1 text-sm text-yellow-500'>
-                        <Loader2 className='w-4 h-4 animate-spin' />
-                        <span className='capitalize'>Training</span>
-                      </div>
-                    )}
+                        <div className='flex items-center gap-1 text-sm text-red-500'>{" "}
+                          <XCircle className='w-4 h-4' />
+                          <span className='capitalize'>{model.training_status}</span>
+                        </div>
+
+                      ) : (
+
+                        <div className='flex items-center gap-1 text-sm text-yellow-500'>
+                          <Loader2 className='w-4 h-4 animate-spin' />
+                          <span className='capitalize'>Training</span>
+                        </div>
+                      )}
+                </div>
 
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant={'ghost'} size={'icon'} className='w-8 h-8 text-destructive/90 hover:text-destructive'>
+                    <Button
+                      variant={'ghost'}
+                      size={'icon'}
+                      className='w-8 h-8 text-destructive/90 hover:text-destructive'
+                    >
                       <Trash className='w-4 h-4' />
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogTitle>Delete Model</AlertDialogTitle>
                       <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete your account
-                        and remove your data from our servers.
+                        Are you sure you want to delete this model? This action cannot be undone. All data related to this model will be permanently deleted.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction>Continue</AlertDialogAction>
+                      <AlertDialogAction
+                        onClick={() => handleDeleteModel(model.id, model.model_id || '', model.version || '')}
+                        className='bg-destructive hover:bg-destructive/90'>
+                        Delete
+                      </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
               </div>
 
             </div>
+
 
             <CardDescription>
               Created{

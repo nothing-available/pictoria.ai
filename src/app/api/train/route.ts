@@ -8,8 +8,7 @@ const replicate = new Replicate({
 });
 
 const WEB_HOOK_URL =
-  process.env.SITE_URL ??
-  "https://7c6c-2401-4900-1c30-649-11dc-c8a0-4909-4930.ngrok-free.app";
+  process.env.SITE_URL ?? "https://bce8-2401-4900-1c69-2f52-cb77-dbec-31de-f214.ngrok-free.app";
 
 export async function POST(request: NextRequest) {
   try {
@@ -84,7 +83,7 @@ export async function POST(request: NextRequest) {
           input_images: fileUrl.signedUrl,
           trigger_word: "smtkur",
         },
-        webhook: `${WEB_HOOK_URL}/api/webhooks/training`, // Fix this line
+        webhook: `${WEB_HOOK_URL}/api/webhooks/training?userId=${user.id}&modelName=${encodeURIComponent(input.modelName)}&fileName=${encodeURIComponent(fileName)}`,
         webhook_events_filter: ["completed"],
       }
     );

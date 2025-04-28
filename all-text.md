@@ -48,7 +48,7 @@ const avatars = [
     fallback: "FG",
   },
   {
-    src: "/avatars/Portrait of a Woman in Rust-Colored Top.jpeg",
+    src: "/avatars/Portrait of a Women in Rust-Colored Top.jpeg",
     fallback: "PW",
   },
   {
